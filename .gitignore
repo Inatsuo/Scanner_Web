@@ -1,6 +1,7 @@
 # Sensitive — never commit
 **/targets.txt
 **/data/creds.json
+data/*.creds.json
 
 # Python
 __pycache__/
