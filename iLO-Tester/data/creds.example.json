@@ -1,0 +1,10 @@
+[
+  {
+    "username": "admin",
+    "password": "admin",
+    "path": "/json/login_session",
+    "username_field": "user_login",
+    "password_field": "password",
+    "json_extra": {"method": "login"}
+  }
+]

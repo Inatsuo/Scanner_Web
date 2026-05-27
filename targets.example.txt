@@ -1,0 +1,14 @@
+# Format reference — copy to `<Tester>/targets.txt` and edit with real IPs.
+# One target per line. `#` for comments. Blank lines ignored.
+
+# Single IP
+192.168.1.10
+
+# CIDR — full subnet
+192.168.1.0/24
+
+# Range, short form (last octet only)
+192.168.1.10-50
+
+# Range, full form (works across subnets)
+10.0.0.1-10.0.1.50
