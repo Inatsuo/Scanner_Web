@@ -19,7 +19,7 @@ _AUTH_PATH   = "/WebConfig/lua/auth.lua"
 MAX_ATTEMPTS = 2
 
 _SATO_PATTERNS = re.compile(
-    r"SATO|CL4NX|CL6NX|CT4-LX|FX3-LX|WebConfig",
+    r"SATO|CL4NX|CL6NX|CT4-LX|FX3-LX|sato_logo",
     re.IGNORECASE,
 )
 
