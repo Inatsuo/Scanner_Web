@@ -14,6 +14,7 @@ Deux modes d'utilisation cohabitent dans ce repo :
 | `InfoPrint` | InfoPrint 6700 (Ricoh/Printronix) | HTTP Basic Auth | `/indexConf.html` |
 | `XPort` | Lantronix XPort | HTTP Basic Auth | `/secure/ltx_conf.htm` |
 | `SATO` | SATO CL4NX Plus (et compatibles WebConfig) | Form POST + cookie session | `/WebConfig/lua/auth.lua` |
+| `Zebra` | Zebra PrintServer (ZTC ZE/ZD/ZT series, ZPL) | Form POST avec champs `0`/`1` | `/authorize` |
 
 ## Architecture (scanner unifié)
 
