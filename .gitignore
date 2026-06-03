@@ -3,6 +3,10 @@
 **/data/creds.json
 data/*.creds.json
 
+# Scan output (real IPs / discovered creds)
+results/
+*.csv
+
 # Python
 __pycache__/
 *.py[cod]

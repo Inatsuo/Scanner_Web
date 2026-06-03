@@ -2,6 +2,7 @@ import argparse
 import ipaddress
 import logging
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from rich import box
@@ -9,6 +10,7 @@ from rich.console import Console
 from rich.table import Table
 
 import targets as targets_mod
+from report import ScanReport
 from runner import run_scans
 from services import ALL_SERVICES, SERVICES_BY_NAME
 
@@ -22,6 +24,7 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--check-auth", action="store_true", help="Try default credentials when a service is detected")
     p.add_argument("--service",    default="", help=f"Comma-separated list of services (default: all). Options: {available}")
     p.add_argument("--workers",    type=int, default=30, help="Parallel scan workers (default: 30)")
+    p.add_argument("--out",        default="", help="CSV file for hits (default: results/hits_<timestamp>.csv). Flushed per hit, so partial scans are kept.")
     p.add_argument("--only-found", action="store_true", help="Show only detected targets in the table")
     p.add_argument("--verbose",    action="store_true", help="Show DEBUG logs (pair with --workers 1 for readable output)")
     return p.parse_args()
@@ -63,17 +66,34 @@ def main() -> None:
         f"= {total} scan(s)[/bold] with {workers} worker(s)...\n"
     )
 
-    done = [0]
-    def on_result(r):
-        done[0] += 1
-        marker = "[green]HIT[/green]" if r.detected else "[dim]--[/dim]"
-        console.print(f"  [{done[0]:>4}/{total}] {marker} [cyan]{r.ip:<15}[/cyan]  [magenta]{r.service}[/magenta]")
+    out_path = Path(args.out) if args.out else (
+        Path("results") / f"hits_{datetime.now():%Y%m%d_%H%M%S}.csv"
+    )
+    report = ScanReport(out_path, total, console, check_auth=args.check_auth)
 
-    results = run_scans(services, targets, check_auth=args.check_auth,
-                        workers=args.workers, on_result=on_result)
+    results: list = []
+    try:
+        results = run_scans(services, targets, check_auth=args.check_auth,
+                            workers=args.workers, on_result=report.record)
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Interrupted — partial hits already saved.[/yellow]")
+    finally:
+        report.close()
+
+    console.print()
+    console.print(report.summary())
+
+    if not results:
+        # Interrupted (or nothing scanned): the CSV holds whatever hits we got.
+        return
 
     results.sort(key=lambda r: (ipaddress.IPv4Address(r.ip), r.service))
     visible = [r for r in results if r.detected] if args.only_found else results
+
+    # Don't dump a million rows to the terminal — the CSV already has the hits.
+    MAX_ROWS = 500
+    truncated = max(0, len(visible) - MAX_ROWS)
+    visible = visible[:MAX_ROWS]
 
     table = Table(title="Service Scan Results", box=box.ROUNDED, show_lines=True, highlight=True)
     table.add_column("IP",       style="cyan",    no_wrap=True)
@@ -101,6 +121,11 @@ def main() -> None:
 
     console.print()
     console.print(table)
+    if truncated:
+        console.print(
+            f"[dim]… {truncated} more row(s) hidden. "
+            f"Use --only-found, or open the CSV: {out_path}[/dim]"
+        )
 
 
 if __name__ == "__main__":

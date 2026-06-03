@@ -70,6 +70,7 @@ python scan.py targets.txt [options]
 | `--check-auth` | Essaye les creds de `data/<service>.creds.json` quand un service est détecté |
 | `--service ilo,sato` | Filtre les services à tester (défaut : tous) |
 | `--workers N` | Threads parallèles (défaut : 30) |
+| `--out FICHIER.csv` | Fichier CSV des hits (défaut : `results/hits_<timestamp>.csv`) |
 | `--only-found` | N'affiche dans la table que les devices détectés |
 | `--verbose` | Logs DEBUG (utilise `--workers 1` pour rester lisible) |
 
@@ -96,6 +97,24 @@ python scan.py targets.txt --service sato,xport --check-auth
 
 # Debug d'une IP isolée
 python scan.py targets.txt --workers 1 --verbose
+```
+
+## Résultats & gros scans (200k+ cibles)
+
+Le table de fin n'est utile que pour les petits scans. Pour les gros runs, les **hits sont écrits au fil de l'eau** dans un CSV (`results/hits_<timestamp>.csv` par défaut, sinon `--out`), **flushé après chaque hit** : si tu coupes le scan en `Ctrl+C` à la moitié, tu gardes tout ce qui a été trouvé jusque-là.
+
+- Une ligne de **progression** est affichée tous les 2000 scans : `…12000/1000000 (1.2%)  hits=34 auth=2 errors=540  410/s`.
+- Chaque **HIT** est imprimé en direct (et écrit dans le CSV), avec les creds si `--check-auth` réussit.
+- À la fin (ou à l'interruption), un **récap** affiche : scannés, hits, auth success/failed, sans détection, erreurs/injoignables, durée, et le chemin du CSV.
+- Le CSV ne contient **que les hits** (devices détectés). Colonnes : `timestamp, ip, service, url, detected, auth, username, password, error`.
+- Le table détaillé de fin est tronqué à 500 lignes (le CSV reste la source complète).
+
+```powershell
+# Gros scan : sauvegarde au fil de l'eau, récap à la fin, Ctrl+C-safe
+python scan.py targets.txt --check-auth --out results/run1.csv
+
+# Reprendre la consultation des hits même après interruption
+Import-Csv results/run1.csv | Format-Table
 ```
 
 ## Logique de détection
